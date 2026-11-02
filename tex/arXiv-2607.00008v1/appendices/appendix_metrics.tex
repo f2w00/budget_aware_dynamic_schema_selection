@@ -1,0 +1,20 @@
+\section{Metrics}
+\label{sec:metrics}
+
+\subsection{Accuracy computation}
+We compute F\textsubscript{1} from true positives (TP), false positives (FP), and false negatives (FN) defined at the row–value level. 
+For Multi rows, each predicted value is treated independently (“unrolled”) to avoid crediting extra unattested values. 
+LLM responses that cannot be mapped to any schema row or valid value type are marked invalid and excluded from scoring. 
+When a predicted value is type‑coercible (\textit{e.g.}, the string ``4'' for a Numeric row), we normalize it before comparison. 
+All F\textsubscript{1} results are averaged over three independent runs, with coefficients of variation computed across runs.
+
+\subsection{Latency and token accounting}
+We measure per‑transcript latency and token usage separately for (i) prompt/input tokens and (ii) completion/output tokens.
+For the baseline (no segmentation), latency is simply the extraction call duration.
+For SchemaRAG, we measure (a) the segmentation call and (b) the $n$ extraction calls; because extraction calls run in parallel, the effective extraction latency is the maximum of these $n$ durations.
+Final reported latency and token counts are averaged over three runs for each experimental condition, also with coefficients of variation.
+
+\subsection{Significance testing}
+To assess whether differences in F\textsubscript{1}, latency, or token usage are statistically reliable, we apply the Wilcoxon signed-rank test \cite{wilcoxon1992individual} to per-transcript metrics, averaged over three runs. 
+This non-parametric test is chosen because Shapiro–Wilk tests \cite{shapiro1965analysis} indicate that per-transcript distributions significantly deviate from normality, often exhibiting skewness or heavy tails.
+Unless otherwise stated, we treat $p < 0.05$ as statistically significant.

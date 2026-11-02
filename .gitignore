@@ -1,0 +1,46 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+.codegraph/
+
+# 本地训练产物和数据集不进入源码仓库。
+models/
+data/
+training_dataset.jsonl
+
+# 实验原始输出和可再生成的评估结果。
+experiments/
+benchmarks/runs/
+benchmarks/analysis/
+reports/
+
+# 论文 PDF 和 LaTeX 编译产物不进入源码仓库，源文件和图片保留。
+tex/**/*.pdf
+tex/**/*.aux
+tex/**/*.fdb_latexmk
+tex/**/*.fls
+tex/**/*.log
+tex/**/*.out
+tex/**/*.xdv
+tex/**/*.synctex.gz
+tex/**/*.toc
+tex/**/*.bbl
+tex/**/*.blg
+tex/**/*.run.xml
+tex/**/*.bcf
+tex/**/*.nav
+tex/**/*.snm
+tex/**/*.vrb
+tex/**/*.zip
+
+# 临时提示词、样例输入和本地缓存。
+1*.json
+simple.json
+*.log
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.xdv

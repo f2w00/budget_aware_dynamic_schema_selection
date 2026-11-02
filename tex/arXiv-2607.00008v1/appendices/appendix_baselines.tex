@@ -1,0 +1,53 @@
+\section{Baselines}
+\label{sec:baselines}
+
+\subsection{Baseline sorting controls and results}
+The baseline used in this work sorts the rows by relevance before it estimates how many rows are able to fit in the prompt, then truncates those that do not fit. Unlike SchemaRAG, which uses a small, targeted $k$, the baseline aims to completely fill the prompt up with as many rows from the full schema as possible, stopping only when the context limit is reached.
+
+The relevance sort is a pragmatic measure that is especially necessary for the Amazon dataset, whose schema is very large. (An average of 86\% of its rows must be truncated for final extraction prompts to fit in the context.) If we were to truncate this schema without sorting on relevance, the chances of any correct row surviving truncation is low, because the schema comes by default in an arbitrary order. This would lead to artificially low performance and would not be an interesting condition. To ensure consistency in method, the same sorting approach for Nursing is applied, even though its full schemas fit in context.
+
+To compare the relevance sorting approach with other approaches, we ran additional full-schema experiments on Nursing. As shown in Table \ref{tab:sorting_methods}, the relevance-based sorting approach provides a more competitive baseline. Notably, SchemaRAG's relative gains would appear even more significant if compared against a baseline lacking this sorting method.
+
+\begin{table}[t]
+    \centering
+    \caption{Comparison of schema sorting methods on macro-F\textsubscript{1} performance (run 3$\times$).}
+    \label{tab:sorting_methods}
+    % \begin{tabular}{p{0.5\columnwidth}c}
+    \begin{tabular}{lr}
+        \toprule
+        \textbf{Sorting Method} & \textbf{macro-F\textsubscript{1}} \\
+        \midrule
+        As-is, arbitrary order & 0.762 \\
+        \makecell[lt]{By JSON keys \\ \quad (alphabetical on hierarchy)} 
+            & 0.772 \\
+        \makecell[lt]{By relevance \\ \quad (proposed method)} 
+            & \textbf{0.851*} \\
+        \bottomrule
+        \multicolumn{2}{l}{
+            \small * Statistically significant ($p < 0.001$) vs. other methods.
+        }
+    \end{tabular}
+\end{table}
+
+
+
+
+\subsection{Additional baseline}
+We report an additional baseline here that is inspired from tabular, rather than text-based, RAG strategies. This method uses only each schema row’s embedded name for retrieval, which is a lightweight grounding strategy somewhat analogous to TableRAG’s ``ReadSchema'' approach \cite{chen2024tablerag} and minimally exploits the structured nature of the schema by using only one element of its metadata. We report micro-F\textsubscript{1} (averaged over three runs) on the Nursing and Amazon datasets (Table~\ref{tab:additional_baseline}).
+
+\begin{table}[ht]
+    \centering
+    \caption{Comparison of additional baselines.}
+    \label{tab:additional_baseline}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Method} & \textbf{Nursing} & \textbf{Amazon} \\
+        \midrule
+        Full-schema & 0.844 & 0.471 \\ 
+        Row-name-only & 0.800 & 0.341 \\ 
+        SchemaRAG & \textbf{0.918} & \textbf{0.510} \\ 
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+SchemaRAG outperforms this lightweight table-inspired baseline as well as the full-schema, information-extraction-inspired baseline.

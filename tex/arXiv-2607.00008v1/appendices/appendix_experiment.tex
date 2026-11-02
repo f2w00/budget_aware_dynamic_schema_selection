@@ -1,0 +1,26 @@
+\section{Models and hyperparameters}
+\label{sec:experiment}
+
+\subsection{Row weights}
+All weights $w$ in Eq. \ref{eq:rowembedding} are fixed throughout and were tuned by grid search on preliminary proprietary held-out test sets drawn from Hospitals A--D; the values of $w$ and metadata to which they apply are proprietary, but include weighting a row's name, category(ies), and possible value(s).
+
+\subsection{Prompt truncation method}
+To ensure that the prompt length stays within the input token limit, we apply a truncation strategy that dynamically adjusts the number of schema rows to be included in the prompt in the full schema experiments (with no examples). The procedure is as follows:
+
+\begin{enumerate}
+\item First, construct the full prompt using all schema rows and compute the total token count, including the instruction prompt and the schema (in JSON Schema format as in Table~\ref{tab:exampleschema}). If the token count is already within the limit, return the prompt as-is.
+
+\item Otherwise, compute a relevance score $\rho$ for each row (\textit{i.e.}, cosine similarity to the input), and sort the rows in descending order of relevance so that the least relevant rows can be removed from the end of the list during truncation. 
+
+\item Given the sorted list of rows, initialize two pointers:  \texttt{left} at 0 and  \texttt{right} at the total number of rows in the schema.
+
+\item While \texttt{left} $\leq$ \texttt{right}, compute the midpoint index \texttt{mid}.
+
+\item Construct a temporary prompt using only the first \texttt{mid} rows and compute the total token count, including the instruction prompt and schema (in JSON Schema format as in Table~\ref{tab:exampleschema}).
+
+\item If the total token count is within the limit, update \texttt{left = mid + 1} to try including more rows.
+
+\item If the token count exceeds the limit, update \texttt{right = mid - 1} to reduce the number of rows. 
+
+\item Repeat until the maximum valid number of matches is found. The final prompt is then constructed using this schema subset.
+\end{enumerate}

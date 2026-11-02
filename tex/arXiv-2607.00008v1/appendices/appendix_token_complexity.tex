@@ -1,0 +1,89 @@
+\section{Token complexity}
+\label{sec:token_complexity}
+
+% Our latency numbers are sketchy, so instead, do theoretical complexity analysis for firm footing
+% Accurately measuring the latency (in seconds) of LLM-driven systems is difficult where LLM API calls are made using shared compute resources that are subject to rate limits and load balancing. Instead, we analyze the theoretical complexity of our method to give bounds on the expected latency and cost of our method. We consider the number of LLM calls and the number of tokens used in each call, as these are the two main factors that affect latency and cost.
+
+We model the token complexity of SchemaRAG in this way.
+
+For all API LLM-driven methods, the worst-case upper bound on the number of tokens used in a single LLM call (prompt and completion) is the token limit imposed by the service, as the LLM may or may not follow instructions to respond in the form of the provided schema and could exceed it. In this analysis, we assume a typical case to involve a well-behaved LLM that follows instructions to respond in the desired format. 
+
+% Completions are expected to be roughly equal in size to $T$ for segmentation calls, and less than or roughly equal to the provided schema for extraction calls (where the LLM may fill in only some, or maximally all, rows), adding an ignorable constant to our complexity analysis.
+SchemaRAG consists of two steps: segmentation and extraction. 
+For this analysis, we assume that the transcript text $T$ to be segmented contains non-duplicated, non-contradictory extractable facts that are well-distributed throughout the text, so that a well-behaved LLM segmenter will yield segments of roughly equal length.
+In segmentation, the input prompt contains the full transcript, yielding complexity $O(T)$, and the segmented output is expected to be of roughly equal size, also $O(T)$. Input and output together yield a complexity of $O(T)$ (with the doubling of the single term from input and output an ignorable constant).
+
+In extraction, we assume that the hyperparameter $k$ is set such that it will exhaust neither the number of available schema rows nor the number of examples in a full example set $A$. Each segment $t_i$'s extraction prompt contains a number of dynamically-sized items: $t_i$, the full transcript $T$ (provided for context),
+the reduced schema ${S_\kappa}_i$, and any retrieved examples $A_i$. We can model this complexity as $O(t_i + T + {S_\kappa}_i + A_i)$, which reduces to $O(T + {S_\kappa}_i + A_i)$ (because $t_i$ is related to $T$ by an ignorable constant).
+
+Segmentation yields $n$ segments, each with an extraction prompt.
+Given our expectation of segments of roughly equal length and roughly equal extractable fact density, we can also suppose that SchemaRAG would yield $n$ reduced schemas with a roughly equal number of rows, and $n$ retrieved example sets with a roughly equal number of examples, also assuming that the available full available example set $A$ uniformly covers the test set rows. 
+
+On these assumptions, we can model all $n$ input extractions as having complexity 
+% $O(nt_i + nT + n{S_\kappa}_i + nA_i)$.
+$O(nT + n{S_\kappa}_i + nA_i)$.
+% and distributing this term gives $O(nt_i + nT + n{S_\kappa}_i + nA_i)$. \textcolor{red}{<-- AC: this is unclear. We need a notationally clear way to jump from talking about these values for one segment vs. in general all of the segments. This issue applies below as well.}
+% (where $t$, $S_\kappa$, and $A$ represent the aggregate of segments, reduced schemas, and retrieved examples found by SchemaRAG across all segments). 
+% $nt_i$ when expanded simply recovers the full transcript $T$.
+Since $n$ is a linear factor of $T$, 
+% and the linear constant can be ignored, this term in the worst case rises to $T^2$.
+this can be rewritten as $O(T^2 + T{S_\kappa}_i + TA_i)$.
+% Therefore, extraction input complexity can be modeled as $O(T + T^2 + n{S_\kappa}_i + nA_i)$.
+
+Extraction output complexity is $O(n{{S_\kappa}_i})$, since in the worst case, the entire reduced schema could be filled in each segment's extraction. This can be rewritten as $O(T{S_\kappa}_i)$.
+
+Total extraction complexity for a transcript, across all segments, is therefore 
+% $O(T + T^2 + n{S_\kappa}_i + nA_i)$ 
+$O(T^2 + T{S_\kappa}_i + TA_i)$
+(as the doubling of $O(T{{S_\kappa}_i})$ in input and output complexity is an ignorable constant).
+
+Finally, total complexity of SchemaRAG including segmentation and extraction is 
+% $O(T + T^2 + n{S_\kappa}_i + nA_i)$ 
+% $O(T^2 + T{S_\kappa}_i + TA_i)$
+$O(T^2 + T{S_\kappa}_i + TA_i + T)$,
+which can be simplified to 
+$O(T^2 + T{S_\kappa}_i + TA_i)$
+(because $T \leq T^2$).
+% (as the doubling of $T$ from both segmentation complexity and extraction complexity is an ignorable constant).
+
+% Baseline method (full schema): 1 LLM call, O(S) + O(T), and probably dominated by S
+%Considering a baseline approach of performing no segmentation on the transcript $T$ and using the full, unreduced schema $S$, a single LLM call performs the extraction task. The complexity of the prompt is $O(|S| + |T|)$, and is dominated by $|S|$ for large schemas examined in this work. The completion size is expected to be roughly equal to $|T|$, so the total complexity of this call is $O(|S| + |T|)$. <--- BH: not sure why we have to repeat it
+% In the baseline approach, with no segmentation or schema reduction, a single LLM prompt uses the full schema $S$ and full transcript $T$, yielding a complexity of $O(|S| + |T|)$, dominated by $|S|$ for large schemas. The completion size is expected to be roughly equal to $|T|$, so the total complexity of this call is $O(|S| + |T|)$.
+
+
+% % Baseline method with segmentation: 1 + n LLM calls; segmentation: 1 LLM call, O(T); extraction: n LLM calls, each O(S)
+% Adding segmentation to the baseline method, we first make a single LLM call to segment the transcript $T$ into $n$ segments. 
+% % The complexity of this call is $O(|T|)$. Then we make $n$ LLM calls to perform the extraction task, each with a prompt of size $S + |t_i|$, where $|t_i|$ is the length of segment $i$. The complexity of these calls is $O(nS)$, as $S$ is much larger than any segment $t_i$.
+% This call has equal prompt and completion complexity of $O(|T|)$. Then we make $n$ LLM calls to perform the extraction task, each with a prompt of size $O(|S| + |t_i|)$, where $|t_i|$ is the length of segment $i$. Each extraction call has a completion complexity of $O(|S|)$, so the total complexity of all $n$ extraction calls is $O(n|S|)$. The total complexity of the baseline method with segmentation is $O(|T| + n|S|)$, which is dominated by $n|S|$ for large schemas. <---BH: same comment as above and it's pretty clear that we are talking about complexity here so no need to repeat
+
+% When adding segmentation to the baseline,
+%     % With segmentation into 
+% % $n$ transcript segments, 
+% % segments
+% a first LLM call yields segments 
+% $t_0, ... t_i, ... t_n$
+% % we first call the LLM to perform segmentation 
+% with complexity 
+% $O(|T|)$.
+% % then run 
+% Then 
+% $n$ extraction calls (one per segment), each
+% with prompt size $O(|S| + |t_i|)$ and output size $O(|S|)$, 
+% are run.
+% Each extraction call has a completion complexity of $O(|S|)$, so the total complexity (in the number of tokens) of all $n$ extraction calls is $O(n|S|)$. The total complexity of this method is $O(|T| + n|S|)$, which is dominated by $n|S|$ for large schemas.
+
+
+% The total complexity becomes $O(|T| + n|S|)$, dominated by $n|S|$.}
+
+% so the total complexity \textcolor{blue}{in the number of tokens} for all $n$ extraction calls is $O(n|S|)$.
+
+% SchemaRAG (our method): 1 + n LLM calls; the same as previous but upper bound is lower because all extraction prompts are shorter due to smaller S’
+%Finally we add schema reduction \textit{via} SchemaRAG %BH
+% With SchemaRAG, we add schema reduction, which introduces a cost to embed all rows in $S$ (and optionally all examples in $A$) offline once---constants that can be ignored in this analysis. The cost of embedding all segments during schema reduction is also linear in $|T|$ and can also be ignored. This means the complexity of our condition becomes $O(|T| + n|S_\kappa|)$, which is of the same form as the baseline with segmentation; but because typically $S_\kappa \ll S$, far fewer tokens are used per extraction call.
+% % resulting in shorter extraction prompts.
+% % because all extraction prompts are typically shorter due to expected $S_\kappa \subset S$.
+
+% In general, increased latency follows from increased token usage. The $n$ extractions over $n$ segments are parallelizable. SchemaRAG is also therefore expected to be faster than the baseline with segmentation since typically $S_\kappa \ll S$, but not necessarily faster than the baseline without segmentation.
+
+
+% % TABLE?

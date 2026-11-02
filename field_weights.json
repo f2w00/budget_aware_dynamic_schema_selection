@@ -1,0 +1,23 @@
+{
+  "weights": {
+    "name": 1.0,
+    "category": 0.9,
+    "form_type": 0.9,
+    "dynasty": 0.9,
+    "material": 0.9,
+    "period": 0.8,
+    "usage": 0.7,
+    "motif": 0.7,
+    "condition": 0.6,
+    "craft": 0.6,
+    "craft_school": 0.6,
+    "site": 0.6,
+    "region": 0.6,
+    "culture": 0.6,
+    "related_person": 0.5,
+    "related_event": 0.4,
+    "acq_type": 0.4,
+    "desc": 0.5
+  },
+  "required_fields": ["name", "category"]
+}

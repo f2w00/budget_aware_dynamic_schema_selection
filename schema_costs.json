@@ -1,0 +1,77 @@
+{
+  "tokenizer": "cl100k_base",
+  "fields": {
+    "acq_type": {
+      "schema_value_tokens": 29,
+      "field_name_tokens": 3
+    },
+    "category": {
+      "schema_value_tokens": 36,
+      "field_name_tokens": 1
+    },
+    "condition": {
+      "schema_value_tokens": 23,
+      "field_name_tokens": 1
+    },
+    "craft": {
+      "schema_value_tokens": 66,
+      "field_name_tokens": 1
+    },
+    "craft_school": {
+      "schema_value_tokens": 42,
+      "field_name_tokens": 2
+    },
+    "culture": {
+      "schema_value_tokens": 48,
+      "field_name_tokens": 1
+    },
+    "desc": {
+      "schema_value_tokens": 13,
+      "field_name_tokens": 1
+    },
+    "dynasty": {
+      "schema_value_tokens": 47,
+      "field_name_tokens": 2
+    },
+    "form_type": {
+      "schema_value_tokens": 42,
+      "field_name_tokens": 2
+    },
+    "material": {
+      "schema_value_tokens": 47,
+      "field_name_tokens": 1
+    },
+    "motif": {
+      "schema_value_tokens": 73,
+      "field_name_tokens": 2
+    },
+    "name": {
+      "schema_value_tokens": 10,
+      "field_name_tokens": 1
+    },
+    "period": {
+      "schema_value_tokens": 56,
+      "field_name_tokens": 1
+    },
+    "region": {
+      "schema_value_tokens": 53,
+      "field_name_tokens": 1
+    },
+    "related_event": {
+      "schema_value_tokens": 40,
+      "field_name_tokens": 2
+    },
+    "related_person": {
+      "schema_value_tokens": 60,
+      "field_name_tokens": 2
+    },
+    "site": {
+      "schema_value_tokens": 57,
+      "field_name_tokens": 1
+    },
+    "usage": {
+      "schema_value_tokens": 37,
+      "field_name_tokens": 1
+    }
+  }
+}

@@ -1,0 +1,689 @@
+\documentclass[11pt]{article}
+
+% Change "review" to "final" to generate the final (sometimes called camera-ready) version.
+% Change to "preprint" to generate a non-anonymous version with page numbers.
+%\usepackage[review]{acl}
+\usepackage[final]{acl}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+
+% For proper rendering and hyphenation of words containing Latin characters (including in bib files)
+\usepackage[T1]{fontenc}
+% For Vietnamese characters
+% \usepackage[T5]{fontenc}
+% See https://www.latex-project.org/help/documentation/encguide.pdf for other character sets
+
+% This assumes your files are encoded as UTF8
+\usepackage[utf8]{inputenc}
+
+% This is not strictly necessary, and may be commented out,
+% but it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+% This is also not strictly necessary, and may be commented out.
+% However, it will improve the aesthetics of text in
+% the typewriter font.
+\usepackage{inconsolata}
+
+%Including images in your LaTeX document requires adding
+%additional package(s)
+\usepackage{graphicx}
+
+% Code listings 
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{xcolor}         % colors
+\usepackage{listings}       % code
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+\lstdefinelanguage{json}{
+    % https://tex.stackexchange.com/questions/83085/how-to-improve-listings-display-of-json-files
+    basicstyle=\normalfont\ttfamily,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    string=[s]{"}{"},
+    stringstyle=\color{blue},
+    comment=[l]{:},
+    commentstyle=\color{black},
+}
+\usepackage{makecell}  % line breaks in cells
+\usepackage{subcaption}  % subfigures
+\usepackage{graphicx}  % images
+\usepackage[
+    % justification=centering,
+]{caption}
+\captionsetup[table]{skip=3pt}
+
+
+% If the title and author information does not fit in the area allocated, uncomment the following
+%
+%\setlength\titlebox{<dim>}
+%
+% and set <dim> to something 5cm or larger.
+
+\title{SchemaRAG: Dynamic Large Schema Reduction for LLM-driven Structured Information Extraction}
+
+% Author information can be set in various styles:
+% For several authors from the same institution:
+% \author{Author 1 \and ... \and Author n \\
+%         Address line \\ ... \\ Address line}
+% if the names do not fit well on one line use
+%         Author 1 \\ {\bf Author 2} \\ ... \\ {\bf Author n} \\
+% For authors from different institutions:
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \And  ... \And
+%         Author n \\ Address line \\ ... \\ Address line}
+% To start a separate ``row'' of authors use \AND, as in
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \AND
+%         Author 2 \\ Address line \\ ... \\ Address line \And
+%         Author 3 \\ Address line \\ ... \\ Address line}
+
+%\author{First Author \\
+%  Affiliation / Address line 1 \\
+%  Affiliation / Address line 2 \\
+%  Affiliation / Address line 3 \\
+%  \texttt{email@domain} \\\And
+%  Second Author \\
+%  Affiliation / Address line 1 \\
+%  Affiliation / Address line 2 \\
+%  Affiliation / Address line 3 \\
+%  \texttt{email@domain} \\}
+
+\author{
+  \textbf{Sin Yu Bonnie Ho}\thanks{Equal contribution. Corresponding authors: \texttt{siho@microsoft.com}, \texttt{arliecoles@microsoft.com}} \\ \And
+  \textbf{Arlie Coles}\footnotemark[1] \\ \And
+  \textbf{Erik Larsson} \\ \AND
+  \textbf{Eric Marshall} \\ \And
+  \textbf{Nathan Bodenstab} \\ \And
+  \textbf{Paul Vozila} \\ \AND
+  \textnormal{Microsoft}
+}
+
+
+%\author{
+%  \textbf{First Author\textsuperscript{1}},
+%  \textbf{Second Author\textsuperscript{1,2}},
+%  \textbf{Third T. Author\textsuperscript{1}},
+%  \textbf{Fourth Author\textsuperscript{1}},
+%\\
+%  \textbf{Fifth Author\textsuperscript{1,2}},
+%  \textbf{Sixth Author\textsuperscript{1}},
+%  \textbf{Seventh Author\textsuperscript{1}},
+%  \textbf{Eighth Author \textsuperscript{1,2,3,4}},
+%\\
+%  \textbf{Ninth Author\textsuperscript{1}},
+%  \textbf{Tenth Author\textsuperscript{1}},
+%  \textbf{Eleventh E. Author\textsuperscript{1,2,3,4,5}},
+%  \textbf{Twelfth Author\textsuperscript{1}},
+%\\
+%  \textbf{Thirteenth Author\textsuperscript{3}},
+%  \textbf{Fourteenth F. Author\textsuperscript{2,4}},
+%  \textbf{Fifteenth Author\textsuperscript{1}},
+%  \textbf{Sixteenth Author\textsuperscript{1}},
+%\\
+%  \textbf{Seventeenth S. Author\textsuperscript{4,5}},
+%  \textbf{Eighteenth Author\textsuperscript{3,4}},
+%  \textbf{Nineteenth N. Author\textsuperscript{2,5}},
+%  \textbf{Twentieth Author\textsuperscript{1}}
+%\\
+%\\
+%  \textsuperscript{1}Affiliation 1,
+%  \textsuperscript{2}Affiliation 2,
+%  \textsuperscript{3}Affiliation 3,
+%  \textsuperscript{4}Affiliation 4,
+%  \textsuperscript{5}Affiliation 5
+%\\
+%  \small{
+%    \textbf{Correspondence:} \href{mailto:email@domain}{email@domain}
+%  }
+%}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+Extracting structured data from unstructured text using large language models (LLMs) becomes challenging when the target schemas are large and complex. 
+In such cases, including the full schema in the prompt 
+%contains many irrelevant rows relative to a given input, 
+increases cost and latency, risks lost-in-the-middle performance degradation, and can exceed context length limits. 
+%We propose SchemaRAG, an efficient retrieval-augmented generation (RAG) framework that 
+%dynamically prunes the output schema space for structured information extraction tasks.
+We propose SchemaRAG, a retrieval-augmented generation (RAG) framework that dynamically prunes the output schema space for schema-conditioned information extraction tasks by leveraging schema metadata and few-shot examples (when available).
+%leveraging schema metadata and, when available, limited labeled data to dynamically select a relevant schema subset for just-in-time in-context use. 
+%By leveraging schema metadata and few-shot examples (when available), SchemaRAG constructs a relevant schema subset for just-in-time extraction.
+We evaluate SchemaRAG on real-world healthcare and e-commerce datasets. 
+%Our method reduces prompt size, focuses model attention on pertinent rows, and improves overall extraction performance.
+%on large-schema datasets drawn from healthcare and e-commerce domains.
+% Oracle experiments reveal headroom for additional improvement without sacrificing efficiency, highlighting the potential of SchemaRAG to enhance large-scale information extraction systems. 
+%SchemaRAG improves micro-F\textsubscript{1} by 8.3\%-8.8\%. 
+Our results show that SchemaRAG can achieve up to an 8.8\% increase in micro-F\textsubscript{1}, 
+% Particularly for the Nursing dataset, 
+% SchemaRAG reduces latency by 47\% and token costs by 48\%, 
+a 47\% reduction in latency, and a 48\% reduction in token costs,
+demonstrating its practicality for large-schema extraction.
+\end{abstract}
+
+
+
+\section{Introduction}
+
+%Structured information extraction is the task of extracting and pairing values from unstructured text with keys defined by a schema. 
+Structured information extraction (IE) pairs values from unstructured text with schema-defined keys. In healthcare, 
+%several problems have been framed as structured information extraction tasks, including 
+this includes medical attribute extraction from unstructured clinical notes \cite{Jiang2011-qt, agrawal-etal-2022-large} and accelerated human annotation of medical narrative data \cite{pmlr-v225-goel23a}. 
+Similarly, e-commerce applications focus on product attribute value extraction from unstructured text descriptions with and without supplementary multimodal data \cite{brinkmann2024,zhu-etal-2020-multimodal}.
+
+Further applications of structured IE exist for problems that can be cast as form-filling, 
+%where a schema constitutes a potentially complex hierarchy of form rows to be filled partially or completely, based on some unstructured text containing the relevant information. 
+where models need to populate complex, hierarchical schemas from unstructured text. 
+These forms could have numerous rows, and each row could have complex constraints on potential values (\textit{e.g.}, required types including strings, numbers, single-select radio buttons, multi-select checkboxes, or other custom types). In this work, we consider two such use cases: 
+%for healthcare, the task of filling an electronic health record (EHR) form given unstructured medical narrative text, and for e-commerce, the task of filling a product metadata form given unstructured product description text.
+1) populating electronic health records (EHRs) from medical narratives and 2) filling a product metadata form from e-commerce product description text.
+
+%Instruction-tuned large language models (LLMs) contain semantic information about a variety of domains \cite{Singhal2023} and frequently respect structure requested in-prompt \cite{LIU2024103809}, so they are a natural choice to perform these tasks. 
+Instruction-tuned large language models (LLMs) are well-suited for these tasks due to their broad semantic knowledge \cite{Singhal2023} and ability to follow structured prompt instructions \cite{LIU2024103809}.
+%However, large schemas naively injected into the prompt may exceed the model's context length limit, and even if they do not, they may contain many rows irrelevant to a given input. This can lead to poor performance on the extraction task, as the model may be unable to focus on the relevant parts of the schema due to lost-in-the-middle effects \cite{liu-etal-2024-lost} or distracting irrelevant rows. Furthermore, using large schemas in the prompt incurs significant latency and inference costs, which can be prohibitive for real-time applications.
+However, naively injecting large schemas into the prompt can exceed context limits or introduce many irrelevant rows. This leads to lost-in-the-middle effects \cite{liu-etal-2024-lost} and performance degradation as the model struggles to isolate pertinent rows. The resulting latency and inference costs can preclude real-time applications.
+
+% BH: the caption does not match figure width
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{img/overview2.png}
+    %\caption{Overview of structured information extraction with SchemaRAG. The unstructured text is segmented and used to obtain a reduced schema per segment \textit{via} schema reduction. Each segment and its reduced schema (and its retrieved examples, when available) are then injected into a just-in-time prompted LLM query to perform the extraction task.}
+    \caption{Overview of SchemaRAG which extracts information by segmenting unstructured text and applying schema reduction to each segment. These segments, alongside their reduced schemas and any retrieved examples, are then passed to a just-in-time prompted LLM query for extraction.}
+    \label{fig:overview}
+\end{figure*}
+
+
+To mitigate these issues, we propose Schema-RAG, a retrieval-augmented generation approach that retrieves and prunes the output schema space. By leveraging schema metadata and, when available, limited labeled data, SchemaRAG dynamically selects a relevant schema subset for just-in-time in-context prompted LLM use (Figure \ref{fig:overview}). 
+A well-selected reduced schema shrinks prompt size, decreases the chance of the LLM filling in irrelevant rows, and improves overall extraction performance. 
+
+% SchemaRAG offers a solution for structured information extraction with large schemas that is schema-agnostic, requires no pretraining or fine-tuning, and can operate with or without supplementary labeled data. 
+% The method supports an arbitrary level of hierarchy in the schema, and the embeddings that drive SchemaRAG can be computed offline, making our approach efficient and easy to integrate into existing systems.
+% BH: added not fine-tuning
+%We focus on schema-conditioned information extraction tasks with hosted LLMs under real deployment constraints (\textit{e.g.}, large, complex hierarchical schemas and strict latency/ops budgets); exploring compact fine-tuned models is out of scope by design, as our problem setting prioritizes robustness to schema churn and rapid iteration without per-schema retraining.
+The framework is schema-agnostic and supports arbitrary levels of hierarchy. Because the embeddings driving the retrieval can be computed offline, the system is efficient and easily integrated into existing pipelines. Crucially, SchemaRAG operates as a training-free solution, requiring no pretraining or fine-tuning. 
+We explicitly focus on schema-conditioned extraction using hosted LLMs under real-world deployment 
+% constraints, 
+scenarios
+% such as large, complex schemas and strict resources. 
+including large, complex schemas and strict resource budgets. 
+%In these environments, we prioritize robustness to \textit{schema churn}---the frequent modification of fields---which makes per-schema fine-tuning computationally and operationally exorbitant. 
+By utilizing prompting rather than retraining, our approach allows for rapid iteration and immediate adaptability to evolving requirements.
+
+The contributions of the paper are as follows:
+1) We propose SchemaRAG---a RAG-based method to reduce the solution space for LLM-driven structured information extraction tasks with large, complex output schemas.
+2) We publish experimental results showing that our method delivers  up to an 8.8\% relative micro-F\textsubscript{1} improvement on two real-world, large-schema datasets. Latency and token cost reduce by up to 47\% and 48\% respectively, though outcomes vary by dataset.
+%3) We share ablation studies demonstrating the complementary benefits of several aspects of the SchemaRAG approach, including use of supplementary examples as in-context material vs. as a driver of RAG retrieval, use of schema row embeddings vs. supplementary example embeddings, and use of unstructured text segmentation as a constraint on RAG vs. on other LLM query content.
+
+
+\section{Related Work}
+
+LLMs have been widely used for IE tasks including named entity recognition (NER), relation extraction (RE), and attribute value extraction (AVE) \cite{Dagdelen2024, wang2023instructuiemultitaskinstructiontuning, wei2024chatiezeroshotinformationextraction, brinkmann2024, ZOU2025144572,wu-etal-2024-learning}. 
+%Recently, retrieval-based enhancements have significantly improved performance on such tasks. 
+Recent retrieval-based enhancements further improve IE by augmenting prompts with relevant context. 
+Retrieval-augmented generation (RAG) \cite{lewis2021retrievalaugmentedgenerationknowledgeintensivenlp} refers to techniques that augment LLM prompts with information retrieved from external knowledge sources. A common use case is the dynamic selection of relevant text-based document chunks or few-shot examples for conditioning \cite{
+ma2025knowledgegraphbasedretrievalaugmentedgeneration, 10.1007/978-3-031-72344-5_17}.
+
+%Another recent RAG trend searches over populated data structures like tables and databases to find relevant subsets to inject into the prompt of a downstream LLM-driven task 
+A parallel line of research retrieves already populated data structures (\textit{e.g.}, tables or databases) and injects subsets into the prompt of a downstream task \cite{chen2024tablerag, sui-etal-2024-tap4llm, lin-etal-2023-inner, ye2023large, wang2024chain}. 
+Prior table-centric methods assume available cell values and operate over filled tables to answer questions or perform reasoning. 
+% This assumption mismatches form-filling type of extraction, where the schema is unpopulated and the goal is to populate rows by extracting values from free text. 
+Unlike table‑centric QA over populated tables, our setting is schema‑conditioned form‑filling with a large, unpopulated schema to be populated from free text.
+% BH: addressed IE benchmark unsuitable part
+%This setting also differs from traditional span-IE benchmarks, which exhibit single-span bias and often penalize multiple valid mentions/normalizations, and from event-style IE where ambiguity across co-occurring events conflicts with canonical per-row values.
+Furthermore, we argue that traditional IE benchmarks are unsuitable for evaluating SchemaRAG because their rigid 
+% ``exact-span'' 
+span-based
+scoring penalizes semantically correct LLM extractions that happen to differ from the dataset's specific tagging biases.
+%These methods alleviate cost and lost-in-the-middle concerns associated with baselines of injecting the entire data structure into the prompt. However, these methods often rely on populated values as well as table metadata (column names, types, \textit{etc.}) to identify the relevant subset of the data structure necessary for the downstream task. This makes them ill-suited for structured information extraction, where the goal is instead to populate an unfilled, often hierarchical output schema using values extracted from unstructured text.
+ 
+These challenges highlight an underexplored area in existing RAG literature: current retrieval strategies do not address the challenge of dynamically selecting relevant portions of a complex, structured output schema to guide LLM-based extraction. Our SchemaRAG method applies retrieval to the output schema itself. SchemaRAG narrows the prompt to a relevant subset of a large, hierarchical schema by retrieving: i) a subset of candidate schema rows based on interpolated row metadata and ii) relevant schema-row-labeled text examples (when available). 
+%The rows from b) are then used to augment the RAG-extracted schema subset included in the prompt, while the associated labeled text instances are added as few-shot examples.
+The retrieved rows compose the schema subset injected into the prompt; associated labeled
+% instances (if any) serve 
+data (if any) serve
+as few-shot examples.
+
+\section{Methodology}
+
+To perform structured data extraction of key-value pairs on a transcript $T$ of unstructured text, extracted pairs must conform to some schema $S$. We define $S$ as composed of $m$ rows, where each row $r_i$ has an identifier $i$, a string name $n_i$, and a subschema describing its possible values $v_i$. The value subschemas of $S$ can be arbitrary, according to the types required by the domain (Table \ref{tab:types}). 
+
+In a complex schema, there may exist arbitrary levels of hierarchy that form a path to any row. 
+In this work we consider 2-level schemas, where each row may also belong to any number of categories $C_i$, with each category having a string name $c_j$. This structure is common in EHR systems, but our method is generalizable to schemas with any number of hierarchical levels.
+% \textcolor{blue}{This row-based schema structure is standard in EHR systems, but we adopt it here as a generic representation applicable across domains.}
+
+% \begin{table}[h]
+%     \begin{minipage}[t]{.5\textwidth}
+\begin{table}
+    \centering
+    \caption{Example value subschemas for different row types. 
+    %Other row types may be defined arbitrarily in JSON Schema format.
+    }
+    \label{tab:types}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Type} 
+            & \textbf{Value subschema ($v_i$)} \\
+        \midrule
+        \makecell[lt]{Single}
+            & \makecell[lt]{
+                \small\texttt{\{"type": "string",} \\ 
+                \small\texttt{ "enum": ["Yes", "No"]\}}
+            } \\
+        \makecell[lt]{Multi}
+            & \makecell[lt]{
+                \small\texttt{\{"type": "array",} \\
+                \small\texttt{ "enum": ["A", "B", "C"]\}}
+            } \\
+        Numeric 
+            & \small\texttt{\{"type": "number"\}} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+$S$ can be represented in string form as a JSON Schema (Table \ref{tab:exampleschema}). 
+% \textcolor{blue}{We use the JSON Schema representation only for 
+% % rather than as the underlying schema definition itself. 
+% % We specifically chose the JSON Schema representation 
+% since LLMs may more readily fill this standard specification format than others \cite{brinkmann2024}.}
+In the simplest case, $S$ and $T$ can be used directly as in-context input to a prompted LLM query to perform the extraction.
+We only use the JSON Schema representation in the prompt,
+% rather than as the underlying schema definition itself. 
+% We specifically chose the JSON Schema representation 
+since LLMs may more readily fill this standard specification format than others \cite{brinkmann2024}.
+When annotated examples are available, they can be included in the prompt as in-context learning material. 
+In this work, we aim to reduce $S$ to $S_\kappa$, a smaller set of $\kappa \ll m$ most relevant rows, 
+in order to both improve performance on the structured extraction task and avoid the problems associated with using a very large $S$ in context. 
+
+
+
+\subsection{Schema reduction}
+
+Our schema reduction method 
+leverages two sources of row information: the metadata of the rows themselves, and, when available, example transcripts annotated by row. For each row $r_i \in S$, we create a row embedding ${e_\mathrm{row}}_i$ by normalized weighted interpolation of embedded row metadata $M_i$, using a pretrained embedder $H$ (Eq. \ref{eq:rowembedding}). 
+Intuitively, this is a weighted average over the embeddings of each available metadata field for the row, where the weights control the relative importance of different metadata types.
+The contents of $M_i$ are configurable based on available metadata, but minimally include the row name $n_i$, a string concatenation of the row's category names, $C'_i$, and (for Single or Multi rows) a string concatenation of possible values from the row's value subschema, $v'_i$. We treat each weight $w_j$ as a hyperparameter to be tuned by random or other search.
+
+\begin{equation}
+    % TODO Get this on one column comfortably
+    \small
+    {e_\mathrm{row}}_i = \sum_{j=1}^{|M_i|} w_j \cdot H({{m_i}_j}) \quad \forall {{m_i}_j} \in M_i = \{n_i, C'_i, v'_i, ...\}
+    \label{eq:rowembedding}
+\end{equation}
+
+When a set of annotated examples $A$ is available, we also create an example embedding ${e_\mathrm{ex}}_i$ for each example $a_i = (x_i, y_i) \in A$, where $x_i$ is the unstructured text input and $y_i$ is the annotated structured output. This example embedding is simply the embedding of the text input, $H(x_i)$. Both row and example embeddings are within the same vector space, enabling direct similarity comparison.
+
+We compute a relevance score $\rho_i$ of each embedding $e_i \in E = E_\mathrm{row} \cup E_\mathrm{ex}$ as its cosine similarity to the embedding of the transcript, $H(T)$. We build the reduced schema $S_\kappa$ by examining the embeddings sorted by descending $\rho$. For each embedding $e_i$, if it is a row embedding, we add the corresponding row to $S_\kappa$. If it is an example embedding, we add the corresponding example's annotated rows from $y_i$ to $S_\kappa$. When $k$ embeddings have been examined, we stop. 
+This $k$-nearest neighbors search in the embedding space may lead to more or fewer than $k$ rows in $S_\kappa$, since multiple embeddings may map to the same row and example annotations may include multiple rows.
+
+This process, visualized in Figure~\ref{fig:reduction}, yields a reduced schema $S_\kappa \subseteq  S$ that is sorted by relevance to the transcript $T$ and can be converted to JSON Schema format for use in-context when performing the extraction task. An example of $S_\kappa $ and its JSON Schema representation as presented to the LLM given the transcript $T$ is provided in Appendix \ref{sec:schema_representation}.
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{img/schemarag4.png}
+    \caption{Schema reduction by SchemaRAG (with $k =$ 5). The five closest embeddings to $H(t_i)$ are retrieved. Rows whose embeddings are found are added directly to the reduced schema, and examples whose embeddings are found have their annotated rows added to the reduced schema. The reduced schema is then converted to JSON Schema format for use in the extraction prompt, and the found examples are added as in-context learning material.}
+    \label{fig:reduction}
+\end{figure*}
+
+
+\begin{table}
+    % \end{minipage}%
+    % \hfill
+    % \begin{minipage}[t]{.45\textwidth}
+        \centering
+        \caption{Example schema $S$ containing one Single row $r_i$, in JSON Schema format.}
+        \label{tab:exampleschema}
+        \small
+\begin{lstlisting}[language=json,firstnumber=1,columns=fullflexible]
+{"type": "object",
+ "properties": {
+   "category (c_j)": {
+      "type": "object",
+      "properties": {
+        "row (n_i)": {
+          "type": "string",
+          "enum": ["A", "B", "C"]
+}}}}}
+\end{lstlisting}
+%     \end{minipage}
+\end{table}
+
+\subsection{Transcript segmentation}
+
+%Unstructured text transcripts in some domains may be long enough to correspond to a large number of extractable rows. If so, it may be difficult for the LLM to locate all parts of the transcript with extractable content. The reduced schemas obtained by SchemaRAG, if $k$ is large, may be long enough to cause lost-in-the-middle effects (defeating the purpose of schema reduction), or, if $k$ is small, may not cover all the extractable content in the transcript. 
+In domains with long unstructured text transcripts, LLMs may struggle to locate all extractable content across extensive text. If the SchemaRAG hyperparameter $k$ is too large, the resulting schemas may cause lost-in-the-middle effects, negating the benefits of schema reduction. Conversely, a $k$ that is too small may fail to cover all relevant information.
+To counteract these issues, we experiment with segmenting the transcript into $n$ segments, $t_1, t_2, ..., t_n$, then run SchemaRAG on each segment to obtain per-segment reduced schemas $S_{\kappa_1}, S_{\kappa_2}, ..., S_{\kappa_n}$, and finally run $n$ extractions, with each segment $t_i$ and its corresponding reduced schema $S_{\kappa_i}$ injected into the prompt of each extraction LLM query. Segmentation is performed by a prompted LLM call containing the transcript $T$ and instructions describing how to segment.
+
+\section{Experiments}
+
+\subsection{Datasets}
+
+\textbf{Nursing.}~ We evaluate our method on four proprietary test sets from Hospitals A--D (together the Nursing dataset), each containing between 48--50 transcripts of human-provided, de-identified nurse rounding dictations. Each transcript is human-annotated with a set of key-value pairs from per-hospital schemas $S_{A}$--$S_{D}$ respectively. 
+No row in any schema is present in any other schema. All four hospital schemas use ten row types, including Single, Multi, Numeric, and other proprietary custom types. 
+
+For each hospital, we also curate example sets, $A_{A}$--$A_{D}$, linking key-value pairs with their associated transcript provenance. 
+We examine the effect of these example sets on our schema reduction method and on the downstream extraction task as in-context learning material. The breakdown of the size and content of Nursing can be found in Appendix \ref{sec:datasets}.
+
+% BH: shorten it to keep core inofmration, the rest refer to Appendix
+\textbf{Amazon.}~ For variety in domain, we also evaluate our method on a subset of the publicly available sample of the Bright Data Amazon Products dataset \cite{brightdata2025}. 
+%This dataset contains metadata from 1000 scraped Amazon product webpages, including various prose features and a set of annotated key-value pairs for each product. To create the test set, we sample 48 products. We prepare a transcript for each by concatenating the product title, description, top review, product dimensions, weight, manufacturer, and bullet-point prose features into a string. We also manually review the key-value pairs to ensure they can be substantiated by the transcript content. This test set contains 804 annotated row-value pairs
+%with 554 unique rows.  Collecting and cleaning all rows, values, and product categories over the full 1000 products, we assemble a schema $S_{\mathrm{Am}}$, which contains 1906 rows using
+%four row types: Single, Multi, Numeric, and Weight. All annotated rows in the test set are present in $S_{\mathrm{Am}}$. Amazon transcripts are about 10$\times$ larger than Nursing transcripts on average. For more details on Amazon data preparation, see Appendix \ref{sec:amazon_data_prep}.
+From 1000 scraped Amazon product webpages, we sample 48 products and 
+%construct a transcript for each by concatenating the title, description, top review, and key prose attributes. 
+create a structured extraction task by assembling a transcript for each product through concatenation of the title, description, top review, and key prose attributes. We construct schema rows and annotations through this process and 
+manually verify that annotated key–value pairs are supported by the transcript. The resulting test set contains 804 annotated row–value pairs (554 unique rows). 
+From the full 1000-product sample, we assemble a schema $S_{\mathrm{Am}}$ with 1906 rows spanning four row types (Single, Multi, Numeric, Weight). All annotated rows in the test set appear in this schema. Amazon transcripts are roughly 10$\times$ longer than Nursing transcripts. 
+%Additional dataset construction details are provided in Appendix~\ref{sec:datasets}.
+Full details of the test set and schema construction process are provided in Appendix~\ref{sec:datasets}.
+
+
+\begin{table*}[t]
+\centering
+\caption{Overall extraction accuracy. Statistical significance of macro-F\textsubscript{1} improvements over the full schema baseline is indicated by * ($p <$ 0.05) and \textsuperscript{\textdagger} ($p <$ 0.001).}
+
+
+\label{tab:results}
+\begin{tabular}{lrrrr}
+    \toprule
+    & \multicolumn{2}{c}{\textbf{Nursing}} & \multicolumn{2}{c}{\textbf{Amazon}}  \\
+    \cmidrule(lr){2-3}
+    \cmidrule(lr){4-5}
+    & micro-F\textsubscript{1} $\pm \textsc{cv}$ 
+    & macro-F\textsubscript{1} $\pm \textsc{cv}$ 
+    & micro-F\textsubscript{1} $\pm \textsc{cv}$ 
+    & macro-F\textsubscript{1} $\pm \textsc{cv}$ \\
+    \midrule
+    Full schema 
+        & 0.844 $\pm$ 0.29\%
+        & 0.851 $\pm$ 24.7\%
+        & 0.471 $\pm$ 3.12\%
+        & 0.481 $\pm$ 47.8\% \\
+    \hspace{0.4em} + segmentation 
+        & 0.880 $\pm$ 0.54\%
+        & 0.856* $\pm$ 24.1\% 
+        & 0.423 $\pm$ 1.23\%
+        & 0.451 $\pm$ 32.4\%\\ 
+    \midrule
+    SchemaRAG & 
+        \textbf{0.918} $\pm$ 0.22\%
+        & \textbf{0.899}\textsuperscript{\textdagger} $\pm$ 22.7\% 
+        & \textbf{0.510} $\pm$ 0.87\%
+        & \textbf{0.515} $\pm$ 34.4\% \\
+    \hspace{0.4em} \textit{+ oracle} 
+        & \textit{0.952  $\pm$ \textit{0.05}\%} 
+        & \textit{0.951\textsuperscript{\textdagger} $\pm$ 13.9\%} 
+        & \textit{0.775} $\pm$ \textit{0.35}\%
+        & \textit{0.788}\textsuperscript{\textdagger} $\pm$ 14.8\% \\
+    \bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Models and hyperparameters}
+\label{subsec:models_and_hyperparameters}
+
+% BH: also need to shorten this part and move the rest to Appendix, especially the prompt trunctation part
+
+%All experiments use OpenAI's text-embedding-ada-002 \cite{openaiImprovedEmbedding} as the pretrained embedder $H$ and gpt-4o-2024-08-06 (denoted as GPT-4o) \cite{OpenAI_2024_gpt4o} for all LLM segmentation and extraction calls. While we configure GPT-4o with a temperature of 0 to reduce randomness and encourage consistent outputs, we observe variability between runs. 
+%To mitigate this, we run each evaluation three times unless otherwise noted. 
+%The SchemaRAG hyperparameter $k$ is set to 60 throughout, also unless otherwise noted.
+%All weights $w$ in Eq. \ref{eq:rowembedding} are fixed throughout and were tuned by grid search on preliminary proprietary held-out test sets drawn from Hospitals A--D; the values of $w$ and metadata to which they apply are proprietary, but include weighting a row's name, category(ies), and possible value(s). Segmentation and extraction prompt templates for the two domains (healthcare and e-commerce) are identical except for adjustments to in-prose mentions of these domains. While exact prompt content is proprietary, a general outline of the extraction prompt structure can be found in Figure~\ref{fig:reduction}.
+
+For all the experiments, we use OpenAI's \texttt{text-embedding-ada-002} \cite{openaiImprovedEmbedding} as the embedder $H$ and \texttt{gpt-4o-2024-08-06} (GPT-4o) \cite{openai2024gpt4o} for all segmentation and extraction calls. 
+% BH: added why GPT-4o
+We select GPT-4o for its balance of performance, latency and cost, and because it is currently production-stable in our deployment setting.
+% BH: added backbone models
+We also assess backbone variability with \texttt{gpt-4.1-2025-04-14} (GPT-4.1) \cite{openai2025gpt41} and alternative embedders. %\textcolor{red}{summary deltas are noted in main results.} 
+GPT-4o is run with temperature~0.  
+%due to minor output variability, 
+The SchemaRAG hyperparameter $k$ is fixed to 60, and all row-weights $w$ in Eq.~\ref{eq:rowembedding} are held constant (Appendix~\ref{sec:experiment}).
+We repeat each main experiment three times. 
+
+Prompts follow the structure shown in Fig.~\ref{fig:reduction}, with domain-specific tokens adjusted minimally for each dataset. 
+%\textbf{Prompt truncation.} To stay within GPT-4o's 128k context window,
+%we budget 124k tokens and 4k tokens for input and output respectively.
+%In full-schema experiments, the input sometimes exceeds this budget. To address this, we implement a truncation strategy. We count tokens used by
+%three prompt components: the instructions, the schema 
+%(in JSON Schema format as in Table~\ref{tab:exampleschema}),
+%and any in-context examples. If the combined token count exceeds the input budget, we iteratively remove rows using a binary search strategy 
+%(described in Appendix \ref{sec:prompt_truncation_method}) until the final prompt fits.
+When an input exceeds GPT-4o's 128k-token context window, we apply a truncation procedure that prunes schema rows until the prompt fits; the full algorithm is detailed in Appendix~\ref{sec:experiment}.
+
+
+
+\subsection{Metrics}
+
+\textbf{Accuracy.}~We report an F\textsubscript{1} score using true/false positives and false negatives defined for the structured IE task.
+%Multi rows are ``unrolled,'' so that each value in the hypothesis counts as its own true positive, false positive, or false negative. The reported F\textsubscript{1} score is averaged over three independent runs (and reported with a coefficient of variation) to ensure robustness. Any LLM response that cannot be mapped to an in-schema row and value is considered invalid and not scored.
+Multi rows are evaluated per value (“unrolled”). Invalid or out‑of‑schema outputs are discarded, and type‑coercible values are normalized (\textit{e.g.} ``4'' $\rightarrow$ 4 for a Numeric row)  before scoring. Scores are averaged over three runs.
+%If the LLM returns something reasonably coercible to the correct type (\textit{e.g.} the string ``4'' for a Numeric row), we convert to the correct type before scoring. 
+
+
+\textbf{Latency and token use.} We report average per-transcript latency (in seconds) and average per-transcript token counts (separately for prompt/input and completion/output).
+%Per-transcript latency is calculated in the following way. For the baseline, which does not include segmentation, we simply measure the latency of the single extraction LLM call. For SchemaRAG, we first measure the latency of the segmentation call (resulting in $n$ segments). We then add the latency of the subsequent extraction call with the longest duration (since the $n$ extraction calls run in parallel). 
+%We also average the per-transcript latency and per-transcript token counts. The final reported latency and token counts are averaged over three independent runs for each experimental condition and reported with a coefficient of variation.
+For SchemaRAG, latency includes one segmentation call plus the maximum extraction‑call duration (parallel execution).
+
+
+\textbf{Significance testing.} To evaluate the statistical significance of differences in F\textsubscript{1}, latency, and token usage, the Wilcoxon signed-rank test \cite{wilcoxon1992individual} is applied to 
+per-transcript results. 
+%This non-parametric test is appropriate because it does not assume normality of the underlying distribution. Shapiro-Wilk tests \cite{shapiro1965analysis} further confirmed significant deviations from normality in the per-transcript in all metrics, indicating potential skewness or heavy tails. We consider differences statistically significant when the resulting $p$-value is less than 0.05.
+We treat $p < 0.05$ as statistically significant. 
+Full metrics details can be found in Appendix~\ref{sec:metrics}.
+
+
+\begin{table*}
+    \centering
+    \caption{Average per-transcript latency and token use. Statistical significance of each condition over the previous condition is indicated by \textsuperscript{\textdagger} ($p <$ 0.001).}
+    \label{tab:usage}
+    \begin{tabular}{lrrrr}
+    \toprule
+        & \multicolumn{4}{c}{\textbf{Nursing}} \\
+        \cmidrule(lr){2-5}
+        & Lat. (s) $\pm$ \textsc{cv} 
+        & Tok. in $\pm$ \textsc{cv} 
+        & Tok. out $\pm$ \textsc{cv}
+        % & Max. ext. out
+        & Total tok.
+        \\
+    \midrule
+    Full-schema 
+        & 11.3 $\pm$ 61.4\% 
+        & 77,382 $\pm$ 27.8\%
+        & \textbf{212} $\pm$ 134.5\%
+        % & 212
+        & 77,594
+        \\ 
+    SchemaRAG 
+        & \textbf{6.0}\textsuperscript{\textdagger} $\pm$ 68.9\%
+        & \textbf{38,707}\textsuperscript{\textdagger}  $\pm$ 137.1\%
+        & 421\textsuperscript{\textdagger}  $\pm$ 142.2\%
+        % & 52
+        & \textbf{39,128}
+    \\
+    \textit{+ oracle} 
+        & \textit{4.0}\textsuperscript{\textdagger} $\pm$ \textit{82.9}\%
+        & \textit{31,721}\textsuperscript{\textdagger}  $\pm$ \textit{169.1\%}
+        & \textit{415}\textsuperscript{\textdagger}  $\pm$ \textit{142.6\%}
+        % & 54
+        & \textit{32,136}
+    \\
+
+        \midrule
+        & \multicolumn{4}{c}{\textbf{Amazon}} \\
+        \midrule
+
+        Full-schema 
+            & \textbf{16.4} $\pm$ 27.6\%
+            & \textbf{122,095} $\pm$ 2.3\%
+            & \textbf{147}  $\pm$ 72.0\%
+            % & 147
+            & \textbf{122,243}
+        \\
+        SchemaRAG
+            & 17.7 $\pm$ 35.9\%
+            & 170,929\textsuperscript{\textdagger} $\pm$ 44.7\%
+            & 2,786\textsuperscript{\textdagger} $\pm$ 43.2\%
+            % & 241
+            & 173,714
+        \\
+        \textit{+ oracle} 
+            & \textit{13.0}\textsuperscript{\textdagger} $\pm$ \textit{38.7}\%
+            & \textit{107,004}\textsuperscript{\textdagger} $\pm$ \textit{87.6}\%
+            & \textit{3,766}\textsuperscript{\textdagger} $\pm$ \textit{51.5}\%
+            % & 172
+            & \textit{110,771}
+        \\
+        
+
+        
+    \bottomrule
+    \end{tabular}
+
+    
+\end{table*}
+
+
+
+
+\subsection{Baseline and oracle} 
+We compare SchemaRAG on Nursing and Amazon against two baselines: i) a full-schema prompt and ii) a full-schema+segmentation prompt. 
+%We compare performance of our SchemaRAG method on the Nursing and Amazon datasets to a baseline method of using the full schema $S$ in the prompt, and to a baseline method of using the full schema with segmentation, in Table \ref{tab:results}. 
+The SchemaRAG condition represents the ``maximal'' form of our method, which always uses segmentation and uses examples, when available (\textit{i.e.}, for Nursing).
+%The latter represents the ``maximal'' form of SchemaRAG, which always uses segmentation and \textcolor{red}{uses examples (BH: how?)} when they are available (\textit{i.e.}, for Nursing). 
+% BH: added baseline full-schema sorting
+The full-schema baseline sorts rows by relevance only to include as many rows as fit into context, whereas SchemaRAG selects a small, targeted top-$k$ as its retrieval set to guide extraction. To avoid understating the baseline, we retain this relevance sort. 
+Other sorting-method comparisons and additional baselines (including a lightweight table‑inspired baseline that retrieves by row name only) are provided in Appendix~\ref{sec:baselines}. We also provide an oracle upper bound for the SchemaRAG method by constructing the reduced schema directly from the reference annotated rows.
+
+
+\subsection{Extraction accuracy}
+Nursing F\textsubscript{1} results across all four hospital datasets are calculated as a micro-F\textsubscript{1} score. We also report macro-F\textsubscript{1} scores by averaging per-transcript F\textsubscript{1} scores across the four datasets, and use them in statistical significance testing.
+
+
+%In both Nursing and Amazon, SchemaRAG outperforms baseline methods in micro-F\textsubscript{1} score (Table~\ref{tab:results}). 
+Across both Nursing and Amazon, SchemaRAG outperforms all baselines in micro-F\textsubscript{1} (Table~\ref{tab:results}), with relative gains of 8.8\% on Nursing and 8.3\% on Amazon. 
+These improvements persist with a GPT‑4.1 backbone and other embedders on Nursing (Appendix~\ref{sec:other_backbones}). 
+%At the transcript level, SchemaRAG also significantly improves macro-F\textsubscript{1} for Nursing. 
+%\textcolor{red}{While segmentation alone does not improve performance on Amazon, SchemaRAG combined with segmentation leads to accuracy improvements.} 
+On Amazon, segmentation alone improves recall (0.367 $\to$ 0.641) but degrades precision (0.661 $\to$ 0.316). When combined with SchemaRAG, we observe a recovery in precision (0.316 $\to$ 0.467), resulting in a more balanced performance profile and the highest F\textsubscript{1}.
+%The substitution of the oracle reduced schema demonstrates the upper-bound potential of schema reduction methods for structured information extraction and progress of SchemaRAG along this path.
+%Oracle results show the upper-bound potential of schema reduction methods for structured IE and progress of SchemaRAG along this path.
+The extraction accuracy on Amazon is consistently lower compared to Nursing, likely due to several dataset‑specific factors we discuss in Section \ref{sec:limitations}.
+Finally, while oracle results significantly outperform SchemaRAG on both datasets, they establish a high theoretical ceiling for schema reduction and validate the potential for further refinements to this approach.
+
+
+\subsection{Latency and token use}
+
+\textbf{Computing latency.} In general, SchemaRAG reduces or maintains latency (Table~\ref{tab:usage}). Compared to the baseline, SchemaRAG introduces three differences
+impacting latency: 
+i) the added latency of segmentation;
+ii) parallel extraction of $n$ segments, with total latency bounded by the longest segment's extraction time;
+and iii)
+the substantially reduced size of the schema used in extraction prompts.
+
+Despite segmentation's additional latency, SchemaRAG is 47\% faster than the baseline on Nursing, owing to the far smaller number of extraction input tokens (Table~\ref{tab:usage}) and the reduction in 
+longest-parallel-extraction output tokens (here reducing from 212 to 52). 
+Our Amazon experiments
+show slightly higher latency for SchemaRAG relative to the baseline, though the effect is not significant. SchemaRAG's $O(T)$ segmentation call (Appendix~\ref{sec:token_complexity}) dominates latency due to Amazon's larger transcripts. Thus, despite reduced schema use and extraction parallelization, SchemaRAG yields no reduction in latency on this dataset. This difference demonstrates the impact of scaling transcript size on SchemaRAG: while F\textsubscript{1}'s trajectory is unaffected by an increasing transcript length, latency may plateau or increase.
+
+\textbf{Computing token use.} SchemaRAG reduces token cost for Nursing but raises it for Amazon (Table~\ref{tab:usage}). Although OpenAI charges 4$\times$ more for output tokens than input tokens \cite{OpenAI_pricing}, input tokens dominate token cost in our experiments, exceeding output volume by two to three orders of magnitude. 
+%with the total number of input tokens being two to three orders of magnitude larger than the total number of output tokens. 
+On Nursing, SchemaRAG uses roughly twice the output tokens of the baseline, nearly reaching the oracle count, while halving input tokens.  
+%suggesting the baseline undergenerates. Also, it uses only half as many input tokens, resulting in a 50\% reduction in token use and a 48\% reduction in token cost. 
+This suggests the baseline undergenerates, likely due to lost-in-the-middle effects. SchemaRAG's mitigation yields a 50\% reduction in total token use and 48\% in token cost.
+
+%Given Amazon's larger average transcript size, SchemaRAG's segmentation yields a larger number of output segments, which in turn triggers a larger number of parallel extraction calls.
+%Given Amazon's larger average transcript size, SchemaRAG's segmenation generates more segments and parallel extraction calls.
+On Amazon, SchemaRAG’s segmentation generates more parallel extraction calls due to larger average transcript sizes. 
+%Since the full transcript is included in each per-segment extraction prompt to provide additional context 
+Because each per-segment prompt includes the full transcript for context (Figure~\ref{fig:reduction}), transcript size $T$ becomes a decisive factor for token complexity, which can be modeled as $O(T^2 + T{S_\kappa}_i + TA_i)$ (Appendix \ref{sec:token_complexity}).
+Consequently, SchemaRAG's input tokens exceed the baseline by about 40\%. 
+SchemaRAG also yields more output tokens, approaching the oracle condition.
+This suggests that the baseline also undergenerates and that SchemaRAG mitigates this issue.
+% While these factors increase Amazon's total token cost, SchemaRAG
+%  the overhead reflects a purposeful increase in extraction volume. By allowing for a higher output token budget,
+%the overhead reflects a shift in extraction behavior.
+%SchemaRAG improves recall (from 0.367 to 0.561), effectively mitigating the baseline's tendency to under-extract from large transcripts. While this results in a precision tradeoff (0.661 to 0.467), 
+%the proximity of SchemaRAG's output token count to the oracle suggests that the method successfully \textcolor{red}{captures a more comprehensive capture of information}, albeit with increased noise.
+% BH: not so important
+% Prompt caching, while possible with GPT-4o \cite{OpenAI_cache}, is not used here, and cannot be effectively applied for especially large schemas which must be truncated and differ from test to test (see Section \ref{subsec:models_and_hyperparameters} and Appendix~\ref{sec:experiment}). If applied, caching could cause the full-schema baseline's latency and cost to improve, as the initial instructions and full schema could act as a prefix.
+
+Nevertheless, given SchemaRAG's parallelization of extraction and reduced schema size, we anticipate SchemaRAG could remain competitive in latency and cost for datasets with moderately sized $T$.
+
+
+
+
+% moved ablation studies to Appendix
+% BH: rewrote this section
+\subsection{Ablations} 
+Since SchemaRAG is a flexible, modular method, we conduct ablations to assess the impact of different components on extraction performance. We analyze the effects of using i) supplementary examples, ii) row embeddings and example embeddings, and iii) segmentation scope. 
+%Results show that guidance from labeled examples, particularly when used in both retrieval and prompting, further enhances performance. We found SchemaRAG performance to be stable across a range of $k$ values. Full analyses are in Appendix ~\ref{sec:ablation}. 
+Guidance from labeled examples, especially when used in both retrieval and prompting, consistently improves performance. Combining row and example embeddings yields the best macro-F\textsubscript{1} (0.899 vs. 0.888 row-only and 0.798 example-only). Segmentation primarily helps retrieval (Nursing: 0.898 vs.\ 0.774 baseline; Amazon: 0.554 vs.\ 0.484 baseline). 
+
+We also examine the effect of the hyperparameter $k$. Performance generally improves as $k$ increases until saturating, with $k{=}60$ providing a strong operating point in our experiments. 
+%\textcolor{red}{For retrieval headroom,} 
+SchemaRAG also attains consistently higher recall@k than the full-schema+segmentation baseline,  approaching the upper bound faster (\textit{e.g.}, recall@5: 0.800 vs.\ 0.749 baseline; recall@60: 0.991 vs 0.981 baseline). 
+Full ablation results are in Appendix ~\ref{sec:ablation}. 
+
+
+
+\section{Conclusion}
+
+SchemaRAG is a retrieval-augmented generation method for structured information extraction that dynamically selects a relevant subset of a complex schema based on unstructured input text. Evaluations on two real-world, large-schema datasets show that SchemaRAG improves accuracy over full-schema baselines and remains competitive in latency. 
+%and can significantly reduce token cost in some settings. 
+While its impact on token cost depends on transcript size, oracle experiments show that better accuracy can be achieved while using fewer tokens. This validates the promise of more precise subschema selection as a method, positioning SchemaRAG as a practical step toward efficient and accurate LLM-based structured information extraction.
+
+\section{Limitations}
+\label{sec:limitations}
+We observe consistently lower extraction accuracy on the Amazon dataset compared to the Nursing dataset. This difference likely reflects several dataset‑specific factors. The Nursing dataset uses schemas designed \textit{a priori} by hospitals to support real EHR workflows, paired with naturally occurring nurse dictations and labeled in‑domain examples. In contrast, the Amazon dataset was manually constructed from noisier source data.
+Preparing the Amazon dataset for structured information extraction required substantial cleaning and transformation (Appendix \ref{sec:datasets-amazon}), and the resulting schema rows and gold labels are therefore likely imperfect. Moreover, unlike the Nursing dataset, we do not have access to additional labeled examples to assess the effect of label quality or data scale, which ablation results on Nursing suggest could be beneficial (Appendix \ref{sec:ablation-example}).
+Finally, Amazon input transcripts were created by concatenating product descriptions and related metadata, resulting in longer, more diverse, and multi‑topic inputs than nurse dictations. While SchemaRAG’s segmentation strategy was held constant across datasets for consistency, it was not exhaustively optimized for this setting. These factors likely contribute to the reduced performance observed on the Amazon dataset.
+
+\section*{Ethical Considerations}
+Our clinical experiments use de‑identified, automatically transcribed nursing speech; transcription and labeling errors may propagate to extracted structures.  
+We suggest a human-in-the-loop deployment model requiring clinician review and robust audit trails.
+%so all outputs must be clinician‑reviewed before use. 
+With respect to data privacy, we do not release any clinical data or prompts that could reveal protected information; e‑commerce data is derived from a publicly available sample and is used only for internal evaluation. 
+% Deployment of SchemaRAG should maintain human‑in‑the‑loop verification and audit trails to prevent harm from false positives/negatives and to ensure responsible use.
+
+% BH: rewrite to ethical considerations which doesn't count into the 6 page limit
+
+\iffalse
+\section{Limitations and Future Work}
+
+Because the Nursing data comes from nurses' automatically transcribed speech, errors may be present in the annotations, which caps the accuracy of any text-only extraction method including SchemaRAG. Any deployments of SchemaRAG in the medical record setting should take care to train users in its safe use, including reviewing all extractions, since any structured information extraction system can still commit false positive or false negative errors even with SchemaRAG.
+
+Our consistently lower extraction accuracy on the Amazon domain is more challenging to interpret. Transformation of the original dataset into a test and schema for structured information extraction is labor-intensive (Appendix \ref{sec:amazon_data_prep}).
+Therefore, our existing labels are likely imperfect, and we possess no extra labeled examples whose (likely positive) effect we could assess.
+Furthermore, the input transcripts were manually constructed by concatenating product descriptions and related metadata. These long, multi-topic transcripts may not accurately represent real-world input distributions on which structured extraction would be useful, in contrast to the more task-aligned and naturally occurring dictations in the Nursing dataset. These factors likely contribute to the reduced performance observed on the Amazon dataset.
+
+Due to limited compute resources, we only power SchemaRAG with one LLM, GPT-4o.
+Future work should extend SchemaRAG to additional domains and LLMs to further assess its generalizability. Further research could focus on enriching the structure and content of row and example embeddings, and on improving schema selection strategies to narrow the F\textsubscript{1} gap toward the oracle upper bound. More granular or qualitative evaluations, such as analyzing precision/recall or errors by row type, may also offer deeper insights, particularly in cases where F\textsubscript{1} differences are not statistically significant.
+\fi
+
+% Bibliography entries for the entire Anthology, followed by custom entries
+%\bibliography{custom,anthology-overleaf-1,anthology-overleaf-2}
+
+% Custom bibliography entries only
+\bibliography{custom}
+
+\clearpage
+\appendix
+\input{appendices/appendix_dataset}
+\input{appendices/appendix_schema_representation}
+\input{appendices/appendix_experiment}
+\input{appendices/appendix_metrics}
+\input{appendices/appendix_baselines}
+\input{appendices/appendix_backbones}
+\input{appendices/appendix_token_complexity}
+\input{appendices/appendix_ablation}
+
+
+\end{document}

@@ -1,0 +1,58 @@
+\section{Schema representation}
+\label{sec:schema_representation}
+
+%The standard JSON Schema format shows the representation of one possible schema row, which is useful for describing valid json according to some specifications, and which we use to present the rows of the schema reduced by SchemaRAG in the LLM prompt. We include Table \ref{tab:exampleschema} as an example of how to represent schemas for this type of problem -- i.e., those composed of named rows, which are arranged in categories and can take on possible values -- for filling out by an LLM. Representation by JSON Schema is an important part of our method, since LLMs may more readily fill this format than others.
+
+An example of a reduced schema $S_\kappa $ that SchemaRAG might produce given the transcript $T$ \textit{``pain is at 5 out of 10''}:
+
+\begin{lstlisting}[
+    basicstyle=\tiny,
+    language=json,
+    firstnumber=1,
+    columns=fullflexible,
+    label={lst:reduced_schema}
+]
+{
+  "reduced_rows": [
+    {
+      "id": "0003",
+      "type": "Number",
+      "row": "Pain Level",
+      "category": ["Pain Test"]
+    },
+    {
+      "id": "0001",
+      "type": "Single",
+      "row": "In pain now",
+      "category": ["Pain Test"],
+      "values": ["Yes", "No"]
+    }
+ 
+}
+\end{lstlisting}
+A corresponding example of that reduced schema in JSON Schema format, which we present to the LLM for filling:
+\begin{lstlisting}[
+    basicstyle=\tiny,
+    language=json,
+    firstnumber=1,
+    columns=fullflexible,
+    label={lst:reduced_schema}
+]
+{
+  "type": "object",
+  "properties": {
+    "Pain Test": {
+      "type": "object",
+      "properties": {
+        "Pain Level": {
+          "type": "number"
+        },
+        "In pain now": {
+          "type": "string",
+          "enum": ["Yes", "No"]
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
