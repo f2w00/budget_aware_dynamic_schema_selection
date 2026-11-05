@@ -171,7 +171,10 @@ Online, \method{} does not generate field values. The predictions are used with 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/m1_dynamic_selection_schematic.pdf}
-\caption{M1-based Schema pre-processing. FullSchema outputs provide model-assisted silver supervision offline. Online, M1 combines field-presence and output-length estimates with auditable field weights and estimated costs under a budget to construct the record-level Schema. M1 selects fields only; actual values and API tokens are produced and measured downstream.}
+\caption{M1-based Schema pre-processing. FullSchema silver labels
+supervise offline training. Online presence and length estimates,
+field weights, and estimated costs drive budgeted field selection.
+M1 selects fields, not values; actual tokens are measured downstream.}
 \label{fig:m1-selection}
 \end{figure}
 
@@ -355,20 +358,43 @@ With fixed $c$, increasing $q$ mainly raises the queue-wait tail without a stabl
 
 \subsection{Discussion}
 
-  Under the current single-process configuration, `budget-200` pre-processing coincided with fewer LLM tokens, shorter makespan, and higher effective throughput. Per-record query embedding offset field-load savings in the tested retrieval adaptation; load shaping should therefore be evaluated through completeness, end-to-end time, throughput, success rate, and tail latency, not local pre-processing cost alone.
+Under the tested single-process configuration, `budget-200` reduced
+LLM-token workload and makespan while increasing effective throughput.
+Query-embedding overhead offset field-load savings in the tested
+retrieval adaptation. Evaluation should therefore jointly consider
+completeness, end-to-end time, throughput, success rate, and tail latency.
 
- Explicitly limiting Schema load within an auditable budget changes the online cost profile, but does not establish optimal ranking, field importance, or factual-quality equivalence to `full`. The budget scan supports capacity-based load control and eventual saturation, while the approximate field-count baseline and offline ablation provide no stable advantage for the current \method{} weighted knapsack.
+The budget scan supports capacity-based load control and saturation,
+not optimal ranking, field importance, or factual-quality equivalence.
+Neither the approximate field-count baseline nor the offline ablation
+establishes a stable advantage for M1's weighted knapsack.
 
-   The omission analyses use non-human references, and the main workload comes from the development distribution. The cross-institution holdout extends evidence to an ID-disjoint collection after 100 same-cohort \full{} silver labels, but its conservative reference yields low absolute agreement, so only relative method differences are interpretable, not zero-shot or temporal transfer. The 18-field retrieval result is insufficient for a general conclusion about \schemarag{}. Multi-process or multi-node execution, larger scales, memory scaling, lifecycle costs, and HPC-derived workloads remain unevaluated; the results support pipeline load shaping, not distributed or production-scale scalability. Human-validated evaluation on unseen workloads remains necessary. Code, frozen artifacts, configurations, scripts, and the scoped `prompt-omit` repair procedure are provided in the repository.
+The references are non-human, and the main workload follows the
+development distribution. The ID-disjoint cross-institution holdout
+requires 100 same-cohort FullSchema silver labels; its conservative
+reference permits only relative comparisons, not claims of zero-shot
+or temporal transfer. The 18-field retrieval experiment does not
+support general conclusions about \schemarag{}. Distributed execution,
+larger scales, memory and lifecycle costs, and HPC workloads remain
+unevaluated. Human-validated evaluation on unseen workloads is needed.
+Code, frozen artifacts, configurations, scripts, and the scoped
+`prompt-omit` repair procedure are available in the repository.
 
 \section{Conclusion}
 
-\begin{sloppypar}
-\setlength{\emergencystretch}{4em}
- We proposed and evaluated budget-aware dynamic Schema pre-processing for an LLM-based information-extraction pipeline, trained from \full{} model-assisted silver labels. Within the evaluated museum collection and service configuration, using a single-process Runner, $c=16,q=16$, and a 2,000-record development-distribution workload, \method{} `budget-200` coincided with fewer LLM tokens per run, shorter measured pipeline time, and higher effective throughput. On 500 separate model-assisted reference records, its field-selection coverage was 83.07\%, with 16.93\% omitted at selection.
-\end{sloppypar}
+We presented budget-aware dynamic Schema pre-processing trained from
+FullSchema model-assisted silver labels. On the 2,000-record museum
+workload with a single-process Runner ($c=16,q=16$), M1 `budget-200`
+reduced LLM-token workload and pipeline time while increasing
+throughput. Selection coverage on 500 separate model-assisted reference
+records was 83.07\%, with 16.93\% omitted.
 
-The results demonstrate an engineering trade-off between pipeline efficiency and field-selection completeness, not lossless pruning. After retraining from 100 same-cohort silver labels, `budget-200/400` reduced cross-institution-holdout LLM tokens by 24.79\%/4.51\%, with the budget methods not worse than \full{} under the independent reference. The references do not verify factual quality or zero-shot transfer, and the experiments do not establish distributed, HPC, or production-scale scalability.
+After retraining on 100 same-cohort silver labels, `budget-200/400`
+reduced cross-institution-holdout LLM tokens by 24.79\%/4.51\%,
+without underperforming FullSchema under the independent reference.
+These results support an efficiency--completeness trade-off, not
+lossless pruning, factual-quality equivalence, zero-shot transfer,
+or distributed, HPC, or production-scale scalability.
 
 \section{Acknowledgments}
 This research was supported by the National Natural Science Foundation of China (Grant No.62273275), Key Research and Development Plan of Shaanxi Province (2025GH-YBXM-018).
