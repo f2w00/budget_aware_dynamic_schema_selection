@@ -28,8 +28,8 @@
 
 \title{Budget-Aware Dynamic Schema Selection for Efficient LLM-Based Information Extraction Pipeline}
 \titlerunning{Budget-Aware Dynamic Schema Selection}
-\author{Hongjian Hu \and Letong Wang}
-\authorrunning{Hu, H. \and Wang, L.}
+\author{Hongjian Hu \and Letong Wang \and Wanqing Zhao \and Shaobo Zhang \and Jinye Peng}
+\authorrunning{Hu, H. et al.}
 \institute{School of Information Science and Technology,\\ Northwest University, Xi'an 710127, China}
 
 \begin{document}
@@ -369,6 +369,9 @@ With fixed $c$, increasing $q$ mainly raises the queue-wait tail without a stabl
 \end{sloppypar}
 
 The results demonstrate an engineering trade-off between pipeline efficiency and field-selection completeness, not lossless pruning. After retraining from 100 same-cohort silver labels, `budget-200/400` reduced cross-institution-holdout LLM tokens by 24.79\%/4.51\%, with the budget methods not worse than \full{} under the independent reference. The references do not verify factual quality or zero-shot transfer, and the experiments do not establish distributed, HPC, or production-scale scalability.
+
+\section{Acknowledgments}
+This research was supported by the National Natural Science Foundation of China (Grant No.62273275), Key Research and Development Plan of Shaanxi Province (2025GH-YBXM-018).
 
 \bibliographystyle{splncs04}
 \bibliography{references}
